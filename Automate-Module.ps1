@@ -610,8 +610,8 @@ Function Install-Automate {
                 Write-Host "Exiting Installation..."    
                 Break                
             }
-           # Write-Verbose "Removing Existing Automate Agent"
-           # Uninstall-Automate -Force:$Force -Silent:$Silent -Verbose:$Verbose
+           Write-Verbose "Removing Existing Automate Agent"
+           Uninstall-Automate -Force:$Force -Silent:$Silent -Verbose:$Verbose
             If (!$Silent) {Write-Host "Installing Automate Agent to $AutomateURL"}
             Stop-Process -Name "ltsvcmon","lttray","ltsvc","ltclient" -Force -PassThru
             $Date = (get-date -UFormat %Y-%m-%d_%H-%M-%S)
