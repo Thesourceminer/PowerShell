@@ -1,5 +1,5 @@
 # Checking for ImmyBot Agent and uninstalling if it exists
-
+Write-Host "ImmyBot Agent Checks: Started"
 # Define the path of the executable
 $exePath = "C:\Program Files (x86)\ImmyBot\Immybot.Agent.Service.exe"
 
@@ -35,27 +35,43 @@ Write-Host "An error occurred during uninstallation: $_"
 Write-Host "ImmyBot Agent not found. No action needed."
 }
 
-
-# Checking if ScreenConnect.WindowsClient.exe is running
-$screenConnectRunning = Get-Process | Where-Object { $_.Name -eq "ScreenConnect.WindowsClient" }
-if ($screenConnectRunning) {
-    wmic product where "name like 'ScreenConnect Client%'" call uninstall /nointeractive
-    Start-Sleep -Seconds 5  # Wait for the uninstall process to complete
-
-    # Recheck if it's still running
-    $screenConnectRunning = Get-Process | Where-Object { $_.Name -eq "ScreenConnect.WindowsClient" }
-    if ($screenConnectRunning) {
-        Write-Host "ScreenConnect Client is still running. Please remove it manually and then press any key to continue."
-        $null = Read-Host "Press any key to continue..."
-
-        # Recheck after manual removal attempt
-        $screenConnectRunning = Get-Process | Where-Object { $_.Name -eq "ScreenConnect.WindowsClient" }
-        if ($screenConnectRunning) {
-            Write-Host "ScreenConnect Client is still running. Please ensure it is fully removed before proceeding."
-            Exit
-        }
-    }
+# Checking and terminating ScreenConnect.WindowsClient
+$screenConnectWindowsClient = Get-Process "ScreenConnect.WindowsClient" -ErrorAction SilentlyContinue
+if ($screenConnectWindowsClient) {
+    $screenConnectWindowsClient | Stop-Process -Force
+    Write-Host "Terminated ScreenConnect.WindowsClient instances."
+} else {
+    Write-Host "Did not find any ScreenConnect.WindowsClient instances."
 }
+
+# Checking and terminating ScreenConnect.ClientService
+$screenConnectClientService = Get-Process "ScreenConnect.ClientService" -ErrorAction SilentlyContinue
+if ($screenConnectClientService) {
+    $screenConnectClientService | Stop-Process -Force
+    Write-Host "Terminated ScreenConnect.ClientService instances."
+} else {
+    Write-Host "Did not find any ScreenConnect.ClientService instances."
+}
+
+# Delete specified directory
+$directoryPath = "C:\Users\Administrator\AppData\Local\Apps\2.0"
+if (Test-Path $directoryPath) {
+    Remove-Item -Path $directoryPath -Recurse -Force
+    Write-Host "Deleted contents of directory: $directoryPath"
+} else {
+
+Write-Host "Directory $directoryPath not found. No action needed."
+
+}
+#Additional checks for ScreenConnect.WindowsClient
+
+$screenConnectWindowsClientCheck = Get-Process "ScreenConnect.WindowsClient" -ErrorAction SilentlyContinue
+if ($screenConnectWindowsClientCheck) {
+Write-Host "Warning: ScreenConnect.WindowsClient instances are still running."
+} else {
+Write-Host "No remaining instances of ScreenConnect.WindowsClient."
+}
+
 
 Write-Host "Initiating snapshot process..."
 
