@@ -270,17 +270,18 @@ function Enable-FOGCapture {
 }
 }
 
+
 # User Input for Image Selection
 Write-Host "Select the Image to enable capture on FOG:"
 Write-Host "1. Detailing Image"
-Write-Host "2. Operations Image"
-Write-Host "3. Accounting Image"
+Write-Host "2. Accounting Image"
+Write-Host "3. Operations"
 $selection = Read-Host "Enter your choice (1, 2, or 3)"
 
 switch ($selection) {
     "1" { Enable-FOGCapture -fogServer $FogServer -apiToken $FogServerAPI -hostName "Design-Win11" }
-    "2" { Enable-FOGCapture -fogServer $FogServer -apiToken $FogServerAPI -hostName "Operations-Img" }
-    "3" { Enable-FOGCapture -fogServer $FogServer -apiToken $FogServerAPI -hostName "Accounting-Img" }
+    "3" { Enable-FOGCapture -fogServer $FogServer -apiToken $FogServerAPI -hostName "Operations-Img" }
+    "2" { Enable-FOGCapture -fogServer $FogServer -apiToken $FogServerAPI -hostName "Accounting-Img" }
     default { Write-Host "Fog Imaging: Invalid selection" }
 }
 
