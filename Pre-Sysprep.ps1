@@ -31,7 +31,7 @@ Write-Host "ImmyBot Agent Checks: An error occurred during uninstallation: $_"
 Write-Host "ImmyBot Agent Checks: Immy not found. No action needed."
 }
 
-Write-Host "Screen Connect Checks: Screen Connect Checks: Checking for Screen Connect Instances..."
+Write-Host "Screen Connect Checks: Checking for Screen Connect Instances..."
 # Checking and terminating ScreenConnect.WindowsClient
 $screenConnectWindowsClient = Get-Process "ScreenConnect.WindowsClient" -ErrorAction SilentlyContinue
 if ($screenConnectWindowsClient) {
@@ -70,7 +70,7 @@ Write-Host "Screen Connect Checks: No remaining instances of ScreenConnect.Windo
 }
 
 
-Write-Host "Initiating snapshot process..."
+Write-Host "Snapshot: Initiating snapshot process..."
 
 # Server and Authentication Details
 $baseUrl = "https://pve.murraycompany.com:8006/api2/json"
@@ -114,12 +114,12 @@ $snapshotBody = @{
 try {
     $response = Invoke-RestMethod -Uri $snapshotUrl -Method POST -Headers $headers -Body $snapshotBody
     $upid = $response.data
-    Write-Host "Snapshot task initiated with UPID: $upid"
+    Write-Host "Snapshot: Snapshot task initiated with UPID: $upid"
 } catch {
-    Write-Host "Error initiating snapshot: $_"
+    Write-Host "Snapshot: Error initiating snapshot: $_"
     Exit
 }
-Write-Host "Entering task completion loop..."
+Write-Host "Snapshot: Entering task completion loop..."
 # Start Timer
 $startTime = Get-Date
 
@@ -131,7 +131,7 @@ function Get-TaskStatus {
         $taskStatusResponse = Invoke-RestMethod -Uri $taskStatusUrl -Method GET -Headers $headers
         return $taskStatusResponse
     } catch {
-        Write-Host "Error retrieving task status: $_"
+        Write-Host "Snapshot: Error retrieving task status: $_"
         return $null
     }
 }
@@ -146,24 +146,24 @@ while ($true) {
     if ($taskStatus -and $taskStatus.data) {
         if ($taskStatus.data.status -eq "stopped") {
             if ($taskStatus.data.exitstatus -eq "OK") {
-                Write-Host "Snapshot task completed successfully. Time elapsed: $elapsedSeconds seconds"
+                Write-Host "Snapshot: Snapshot task completed successfully. Time elapsed: $elapsedSeconds seconds"
                 break
             } else {
-                Write-Host "Snapshot task stopped with exit status: $($taskStatus.data.exitstatus). Time elapsed: $elapsedSeconds seconds"
+                Write-Host "Snapshot: Snapshot task stopped with exit status: $($taskStatus.data.exitstatus). Time elapsed: $elapsedSeconds seconds"
                 break
             }
         } else {
-            Write-Host "Current Task Status: $($taskStatus.data.status). Time elapsed: $elapsedSeconds seconds"
+            Write-Host "Snapshot: Current Task Status: $($taskStatus.data.status). Time elapsed: $elapsedSeconds seconds"
         }
     } else {
-        Write-Host "Waiting for task status update... Time elapsed: $elapsedSeconds seconds"
+        Write-Host "Snapshot: Waiting for task status update... Time elapsed: $elapsedSeconds seconds"
     }
     Start-Sleep -Seconds 5
 }
 
-Write-Host "Snapshot $snapname for VM ID $vmid has been successfully created."
+Write-Host "Snapshot: Snapshot $snapname for VM ID $vmid has been successfully created."
 
-Write-Host "Prompting for sysprep confirmation..."
+Write-Host "Sysprep: Prompting for sysprep confirmation..."
 
 
 # Sysprep Confirmation
@@ -174,7 +174,7 @@ if ($sysprepConfirmation -ne "Yes") {
 }
 
 # Sysprep Command Execution
-Write-Host "Running Sysprep..."
+Write-Host "Sysprep: Running Sysprep..."
 $sysprepPath = "$env:windir\system32\sysprep\sysprep.exe"
 if (Test-Path $sysprepPath) {
     & $sysprepPath /generalize /oobe /shutdown /unattend:c:\unattend.xml
