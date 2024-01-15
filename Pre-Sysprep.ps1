@@ -153,6 +153,22 @@ function Update-VMBootOrder {
         Write-Host "Proxmox: Error updating boot order: $_"
     }
 }
+function Disable-SecureBoot {
+    param (
+        $node,
+        $vmid,
+        $headers
+    )
+    $configUrl = "$baseUrl/nodes/$node/qemu/$vmid/config"
+    $updateBody = @{ bios = "seabios" }  # Example to switch to legacy BIOS, adjust as needed
+
+    try {
+        $response = Invoke-RestMethod -Uri $configUrl -Method PUT -Headers $headers -Body $updateBody
+        Write-Host "Secure Boot disabled for VM ID $vmid."
+    } catch {
+        Write-Host "Error disabling Secure Boot: $_"
+    }
+}
 
 # Wait for Task to Complete
 while ($true) {
@@ -188,7 +204,9 @@ Write-Host "Proxmox: Snapshot $snapname for VM ID $vmid has been successfully cr
 Write-Host "Proxmox: Updating Boot Order to only Net0"
 Update-VMBootOrder -node $node -vmid $vmid -headers $headers
 
-
+# Call the function after the snapshot is complete
+Write-Host "Proxmox: Updating Bios to SeaBios to Disable SecureBoot"
+Disable-SecureBoot -node $node -vmid $vmid -headers $headers
 
 Write-Host "Sysprep: Prompting for sysprep confirmation..."
 
