@@ -114,12 +114,12 @@ $snapshotBody = @{
 try {
     $response = Invoke-RestMethod -Uri $snapshotUrl -Method POST -Headers $headers -Body $snapshotBody
     $upid = $response.data
-    Write-Host "Snapshot: Snapshot task initiated with UPID: $upid"
+    Write-Host "Proxmox: Snapshot task initiated with UPID: $upid"
 } catch {
-    Write-Host "Snapshot: Error initiating snapshot: $_"
+    Write-Host "Proxmox: Error initiating snapshot: $_"
     Exit
 }
-Write-Host "Snapshot: Entering task completion loop..."
+Write-Host "Proxmox: Entering task completion loop..."
 # Start Timer
 $startTime = Get-Date
 
@@ -131,8 +131,26 @@ function Get-TaskStatus {
         $taskStatusResponse = Invoke-RestMethod -Uri $taskStatusUrl -Method GET -Headers $headers
         return $taskStatusResponse
     } catch {
-        Write-Host "Snapshot: Error retrieving task status: $_"
+        Write-Host "Proxmox: Error retrieving task status: $_"
         return $null
+    }
+}
+
+function Update-VMBootOrder {
+    param (
+        $node,
+        $vmid,
+        $headers
+    )
+    $configUrl = "$baseUrl/nodes/$node/qemu/$vmid/config"
+    $bootOrder = "order=net0"  # Example boot order, adjust as needed
+    $updateBody = @{ boot = $bootOrder }
+
+    try {
+        $response = Invoke-RestMethod -Uri $configUrl -Method PUT -Headers $headers -Body $updateBody
+        Write-Host "Proxmox: Updated boot order for VM ID $vmid."
+    } catch {
+        Write-Host "Proxmox: Error updating boot order: $_"
     }
 }
 
@@ -146,22 +164,31 @@ while ($true) {
     if ($taskStatus -and $taskStatus.data) {
         if ($taskStatus.data.status -eq "stopped") {
             if ($taskStatus.data.exitstatus -eq "OK") {
-                Write-Host "Snapshot: Snapshot task completed successfully. Time elapsed: $elapsedSeconds seconds"
+                Write-Host "Proxmox: Snapshot task completed successfully. Time elapsed: $elapsedSeconds seconds"
                 break
             } else {
-                Write-Host "Snapshot: Snapshot task stopped with exit status: $($taskStatus.data.exitstatus). Time elapsed: $elapsedSeconds seconds"
+                Write-Host "Proxmox: Snapshot task stopped with exit status: $($taskStatus.data.exitstatus). Time elapsed: $elapsedSeconds seconds"
                 break
             }
         } else {
-            Write-Host "Snapshot: Current Task Status: $($taskStatus.data.status). Time elapsed: $elapsedSeconds seconds"
+            Write-Host "Proxmox: Current Task Status: $($taskStatus.data.status). Time elapsed: $elapsedSeconds seconds"
         }
     } else {
-        Write-Host "Snapshot: Waiting for task status update... Time elapsed: $elapsedSeconds seconds"
+        Write-Host "Proxmox: Waiting for task status update... Time elapsed: $elapsedSeconds seconds"
     }
     Start-Sleep -Seconds 5
 }
 
-Write-Host "Snapshot: Snapshot $snapname for VM ID $vmid has been successfully created."
+Write-Host "Proxmox: Snapshot $snapname for VM ID $vmid has been successfully created."
+
+
+
+
+# Call the function after the snapshot is complete
+Write-Host "Proxmox: Updating Boot Order to only Net0"
+Update-VMBootOrder -node $node -vmid $vmid -headers $headers
+
+
 
 Write-Host "Sysprep: Prompting for sysprep confirmation..."
 
